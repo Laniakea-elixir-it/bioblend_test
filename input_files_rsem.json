@@ -1,0 +1,6 @@
+{
+        "1_reads":"https://raw.githubusercontent.com/Laniakea-elixir-it/general-reads-hg19/main/input_mate1.fastq",
+        "2_reads":"https://raw.githubusercontent.com/Laniakea-elixir-it/general-reads-hg19/main/input_mate2.fastq",
+        "GRCh38_ref":"ftp://ftp.ensembl.org/pub/release-83/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+        "GFCh38_gtf":"ftp://ftp.ensembl.org/pub/release-83/gtf/homo_sapiens/Homo_sapiens.GRCh38.83.gtf.gz"
+}
