@@ -50,16 +50,21 @@ if __name__ == '__main__':
     wf_return = gi.workflows.invoke_workflow(wf['id'], inputs=data, history_id=new_hist['id'])
     print(wf_return)
 
-    jobs_details = bioblend.galaxy.jobs.JobsClient(gi)
-    all_jobs = jobs_details.get_jobs(history_id=new_hist['id'])
+    dataset_client = bioblend.galaxy.datasets.DatasetClient(gi)
+    all_datasets = dataset_client.get_datasets(history_id=new_hist['id'])
+    for dataset in all_datasets:
+        dataset_client.wait_for_dataset(dataset['id'])
+
+    job_client = bioblend.galaxy.jobs.JobsClient(gi)
+    all_jobs = job_client.get_jobs(history_id=new_hist['id'])
     jobs_metrics = dict()
 
     for job in reversed(all_jobs):
         # Wait for the job to be finished
-        jobs_details.wait_for_job(job['id'])
+        job_client.wait_for_job(job['id'])
 
         # Get raw job metrics
-        raw_job_metrics = jobs_details.get_metrics(job['id'])
+        raw_job_metrics = job_client.get_metrics(job['id'])
 
         # Take useful job metrics
         job_metrics = {
