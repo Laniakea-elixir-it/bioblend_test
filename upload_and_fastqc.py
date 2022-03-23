@@ -40,8 +40,10 @@ if __name__ == '__main__':
     data = dict()
 
     # Upload each file in history and put its id in the data dictionary
-    for file_name, file_url in inputs_dict.items():
-        upload = gi.tools.put_url(content=file_url, history_id=new_hist['id'], file_name=file_name)
+    for file_name, file_options in inputs_dict.items():
+        file_url = file_options['url']
+        file_type = file_options['file_type']
+        upload = gi.tools.put_url(content=file_url, history_id=new_hist['id'], file_name=file_name, file_type=file_type)
         upload_id = upload['outputs'][0]['id']
         wf_input = gi.workflows.get_workflow_inputs(workflow_id, label=file_name)[0]
         data[wf_input] = {'id':upload_id, 'src':'hda'}
