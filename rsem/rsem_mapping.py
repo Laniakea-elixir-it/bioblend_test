@@ -53,7 +53,7 @@ def get_job_metrics(gi, hist_id, wf_invocation_id=None):
     jobs_metrics = dict()
 
 
-    for i,job in enumerate(wf_jobs):
+    for job in wf_jobs:
         # Wait for the job to be finished
         job_client.wait_for_job(job['id'])
 
@@ -62,7 +62,7 @@ def get_job_metrics(gi, hist_id, wf_invocation_id=None):
         
         # Take useful job metrics
         job_metrics = {
-            'tool_id':wf_jobs[i]['tool_id'],
+            'tool_id':job['tool_id'],
             'runtime_value':raw_job_metrics[0]['value'],
             'runtime_raw_value':raw_job_metrics[0]['raw_value'],
             'start':raw_job_metrics[1]['value'],
