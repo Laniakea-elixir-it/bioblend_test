@@ -23,6 +23,8 @@ def cli_options():
     parser.add_argument('--ssh-user', default='Pietro', dest='ssh_user', help='Galaxy vm ssh user')
     parser.add_argument('--ssh-key', default='~/.ssh/laniakea-robot.key', dest='ssh_key', help='Galaxy vm ssh key')
     parser.add_argument('--threads', nargs='+', default=[1,2,4,8], dest='threads', help='Threads for mapping')
+    parser.add_argument('--dstat-output-dir', default='~/dstat_out', dest='dstat_output_dir', help='dstat output dir')
+    parser.add_argument('--dstat-device', default='vdb1', dest='dstat_device', help='dstat device to monitor')
     parser.add_argument('--output-dir', default='.', dest='output_dir', help="Path in which jobs metrics are written")
     return parser.parse_args()
 
@@ -93,6 +95,23 @@ def update_job_conf(ssh_user, ssh_key, galaxy_server, job_conf_path, thread):
     command = f'ssh -i {ssh_key} {ssh_user}@{galaxy_ip} "sudo {sed_command}"'
     subprocess.Popen(command, shell=True)
 
+def dstat(ssh_user, ssh_key, galaxy_server, output_file, device):
+    galaxy_ip = galaxy_server.lstrip("http://").rstrip("/")
+    dstat_command = f"dstat --disk-tps -d -t --noheaders -o {output_file} -D {device} > /dev/null"
+    command = f'ssh -i {ssh_key} {ssh_user}@{galaxy_ip} "{dstat_command}"'
+    subprocess.Popen(command, shell=True)
+
+def kill_dstat(ssh_user, ssh_key, galaxy_server):
+    galaxy_ip = galaxy_server.lstrip("http://").rstrip("/")
+    command = f'ssh -i {ssh_key} {ssh_user}@{galaxy_ip} "pkill -9 dstat > /dev/null"'
+    subprocess.Popen(command, shell=True)
+    time.sleep(5)
+
+def get_dstat_out(ssh_user, ssh_key, galaxy_server, dstat_output_dir, output_dir):
+    galaxy_ip = galaxy_server.lstrip("http://").rstrip("/")
+    scp_command = f'scp -r -i {ssh_key} {ssh_user}@{galaxy_ip}:{dstat_output_dir} {output_dir}'
+    subprocess.Popen(scp_command, shell=True)
+
 
 if __name__ == '__main__':
     
@@ -113,6 +132,15 @@ if __name__ == '__main__':
     rsem_wf_id = rsem_wf['id']
     rsem_wf_steps = rsem_wf['number_of_steps']
 
+    # Make dstat output dir
+    galaxy_ip = options.galaxy_server.lstrip("http://").rstrip("/")
+    subprocess.Popen(f'ssh -i {options.ssh_key} {options.ssh_user}@{galaxy_ip} "mkdir -p {options.dstat_output_dir}"', shell=True)
+
+    # Start dstat monitoring
+    kill_dstat(options.ssh_user, options.ssh_key, options.galaxy_server)
+    dstat_output_file = f'{options.dstat_output_dir}/dstat_out_upload.csv'
+    dstat(options.ssh_user, options.ssh_key, options.galaxy_server, dstat_output_file, options.dstat_device)
+
     # Upload reference build input data and build dictionary for workflows
     ref_wf_data = upload_and_build_data_input(inputs_path=options.ref_wf_inputs, gi=gi, hist_id=hist_id, wf_id=ref_wf_id)
     rsem_wf_data = upload_and_build_data_input(inputs_path=options.rsem_wf_inputs, gi=gi, hist_id=hist_id, wf_id=rsem_wf_id)
@@ -127,6 +155,11 @@ if __name__ == '__main__':
     with open(f'{options.output_dir}/upload_jobs_metrics.json','w', encoding='utf-8') as f:
         json.dump(upload_jobs_metrics, f, ensure_ascii=False, indent=4)
 
+    # Kill running dstat process and start new dstat process
+    kill_dstat(options.ssh_user, options.ssh_key, options.galaxy_server)
+    dstat_output_file = f'{options.dstat_output_dir}/dstat_out_reference.csv'
+    dstat(options.ssh_user, options.ssh_key, options.galaxy_server, dstat_output_file, options.dstat_device)
+
     # Invoke reference workflow
     ref_wf_invocation = gi.workflows.invoke_workflow(ref_wf_id, inputs=ref_wf_data, history_id=hist_id)
     ref_wf_invocation_id = ref_wf_invocation['id']
@@ -139,6 +172,9 @@ if __name__ == '__main__':
     # Write reference workflow job metrics to file    
     with open(f'{options.output_dir}/reference_jobs_metrics.json', 'w', encoding='utf-8') as f:
         json.dump(ref_wf_jobs_metrics, f, ensure_ascii=False, indent=4)
+
+    # Kill dstat process
+    kill_dstat(options.ssh_user, options.ssh_key, options.galaxy_server)
 
     # Get job id of the job that built the reference
     ref_job_id = list(ref_wf_jobs_metrics.keys())[0]
@@ -167,6 +203,10 @@ if __name__ == '__main__':
             status_code = r.status_code
         time.sleep(120)
 
+        # Kill running dstat and start new dstat process
+        dstat_output_file = f'{options.dstat_output_dir}/dstat_out_rsem_{thread}thread.csv'
+        dstat(options.ssh_user, options.ssh_key, options.galaxy_server, dstat_output_file, options.dstat_device)
+
         # Invoke rsem workflow
         rsem_wf_invocation = gi.workflows.invoke_workflow(rsem_wf_id, inputs=rsem_wf_data, history_id=hist_id)
         rsem_wf_invocation_id = rsem_wf_invocation['id']
@@ -178,3 +218,8 @@ if __name__ == '__main__':
         # Write rsem workflow job metrics to file
         with open(f'{options.output_dir}/rsem_jobs_metrics_{thread}thread.json','w', encoding='utf-8') as f:
             json.dump(rsem_wf_jobs_metrics, f, ensure_ascii=False, indent=4)
+        
+        # Kill last dstat process
+        kill_dstat(options.ssh_user, options.ssh_key, options.galaxy_server)
+
+    get_dstat_out(options.ssh_user, options.ssh_key, options.galaxy_server, options.dstat_output_dir, options.output_dir)
