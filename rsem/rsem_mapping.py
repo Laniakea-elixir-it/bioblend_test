@@ -5,6 +5,8 @@ import argparse
 import bioblend.galaxy
 import json
 import subprocess
+import requests
+import time
 
 ################################################################################
 # COMMAND LINE OPTIONS
@@ -46,32 +48,42 @@ def wait_for_dataset(gi, hist_id):
         dataset_client.wait_for_dataset(dataset['id'])
 
 
-def get_job_metrics(gi, hist_id, wf_invocation_id=None):
+def get_job_metrics(gi, hist_id, invocation_id=None):
     job_client = bioblend.galaxy.jobs.JobsClient(gi)
-    wf_jobs = job_client.get_jobs(history_id=hist_id, invocation_id=wf_invocation_id)
-    wf_jobs = reversed(wf_jobs)
+    wf_jobs = job_client.get_jobs(history_id=hist_id)
+    #print(wf_jobs)
+
+    # Define filter for jobs
+    if invocation_id is not None:
+        invocation_client = bioblend.galaxy.invocations.InvocationClient(gi)
+        invocation_steps = invocation_client.show_invocation(invocation_id)['steps']
+        jobs_filter = [step['job_id'] for step in invocation_steps]
+    else:
+        jobs_filter = [job['id'] for job in wf_jobs]
+
     jobs_metrics = dict()
 
-
     for job in wf_jobs:
-        # Wait for the job to be finished
-        job_client.wait_for_job(job['id'])
+        job_id = job['id']
+        if job_id in jobs_filter:
+            # Wait for the job to be finished
+            job_client.wait_for_job(job_id)
 
-        # Get raw job metrics
-        raw_job_metrics = job_client.get_metrics(job['id'])
-        
-        # Take useful job metrics
-        job_metrics = {
-            'tool_id':job['tool_id'],
-            'runtime_value':raw_job_metrics[0]['value'],
-            'runtime_raw_value':raw_job_metrics[0]['raw_value'],
-            'start':raw_job_metrics[1]['value'],
-            'end':raw_job_metrics[2]['value']
-        }
+            # Get raw job metrics
+            raw_job_metrics = job_client.get_metrics(job_id)
 
-        # Build dictionary with metrics for each job
-        jobs_metrics[job['id']] = job_metrics
+            # Take useful job metrics
+            job_metrics = {
+                'tool_id':job['tool_id'],
+                'runtime_value':raw_job_metrics[0]['value'],
+                'runtime_raw_value':raw_job_metrics[0]['raw_value'],
+                'start':raw_job_metrics[1]['value'],
+                'end':raw_job_metrics[2]['value']
+            }
 
+            # Build dictionary with metrics for each job
+            jobs_metrics[job_id] = job_metrics
+ 
     return jobs_metrics
 
 
@@ -96,8 +108,10 @@ if __name__ == '__main__':
     # Import workflows
     ref_wf = gi.workflows.import_workflow_from_local_path(options.ref_wf_path)
     ref_wf_id = ref_wf['id']
+    ref_wf_steps = ref_wf['number_of_steps']
     rsem_wf = gi.workflows.import_workflow_from_local_path(options.rsem_wf_path)
     rsem_wf_id = rsem_wf['id']
+    rsem_wf_steps = rsem_wf['number_of_steps']
 
     # Upload reference build input data and build dictionary for workflows
     ref_wf_data = upload_and_build_data_input(inputs_path=options.ref_wf_inputs, gi=gi, hist_id=hist_id, wf_id=ref_wf_id)
@@ -116,29 +130,50 @@ if __name__ == '__main__':
     # Invoke reference workflow
     ref_wf_invocation = gi.workflows.invoke_workflow(ref_wf_id, inputs=ref_wf_data, history_id=hist_id)
     ref_wf_invocation_id = ref_wf_invocation['id']
+    invocation_client = bioblend.galaxy.invocations.InvocationClient(gi)
+    invocation_client.wait_for_invocation(ref_wf_invocation_id)
 
     # Get reference workflow job metrics
-    ref_wf_job_metrics = get_job_metrics(gi, hist_id, ref_wf_invocation_id)
+    ref_wf_jobs_metrics = get_job_metrics(gi=gi, hist_id=hist_id, invocation_id=ref_wf_invocation_id)
 
     # Write reference workflow job metrics to file    
     with open(f'{options.output_dir}/reference_jobs_metrics.json', 'w', encoding='utf-8') as f:
         json.dump(ref_wf_jobs_metrics, f, ensure_ascii=False, indent=4)
+
+    # Get job id of the job that built the reference
+    ref_job_id = list(ref_wf_jobs_metrics.keys())[0]
+
+    # Get output id of the built reference
+    job_client = bioblend.galaxy.jobs.JobsClient(gi)
+    ref_job_output_id = job_client.get_outputs(ref_job_id)[0]['dataset']['id']
+
+    # Add reference to RSEM workflow inputs
+    rsem_ref_wf_input = gi.workflows.get_workflow_inputs(rsem_wf_id, label='rsem_ref')[0]
+    rsem_wf_data[rsem_ref_wf_input] = {'id':ref_job_output_id, 'src':'hda'}
 
     for thread in options.threads:
         # Update job_conf.xml
         update_job_conf(options.ssh_user, options.ssh_key, options.galaxy_server, options.job_conf_path, thread)
 
         # Restart galaxy
-        galaxy_ip = galaxy_server.lstrip("http://")
-        restart_command = f'ssh -i {options.ssh_key} {options.ssh_user}@{options.galaxy_ip} "sudo systemctl restart galaxy"'
+        galaxy_ip = options.galaxy_server.lstrip("http://")
+        restart_command = f'ssh -i {options.ssh_key} {options.ssh_user}@{galaxy_ip} "sudo systemctl restart galaxy"'
         subprocess.Popen(restart_command, shell=True)
+
+        # Check that galaxy is available
+        status_code = 502
+        while status_code != 200:
+            r = requests.get(options.galaxy_server)
+            status_code = r.status_code
+        time.sleep(120)
 
         # Invoke rsem workflow
         rsem_wf_invocation = gi.workflows.invoke_workflow(rsem_wf_id, inputs=rsem_wf_data, history_id=hist_id)
         rsem_wf_invocation_id = rsem_wf_invocation['id']
+        invocation_client.wait_for_invocation(rsem_wf_invocation_id)
 
         # Get rsem workflow metrics
-        rsem_wf_jobs_metrics = get_job_metrics(gi, hist_id, rsem_wf_invocation_id)
+        rsem_wf_jobs_metrics = get_job_metrics(gi, hist_id, invocation_id=rsem_wf_invocation_id)
 
         # Write rsem workflow job metrics to file
         with open(f'{options.output_dir}/rsem_jobs_metrics_{thread}thread.json','w', encoding='utf-8') as f:
