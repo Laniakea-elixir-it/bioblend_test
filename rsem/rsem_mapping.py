@@ -88,7 +88,7 @@ def get_job_metrics(gi, hist_id, invocation_id=None):
 
 
 def update_job_conf(ssh_user, ssh_key, galaxy_server, job_conf_path, thread):
-    galaxy_ip = galaxy_server.lstrip("http://")
+    galaxy_ip = galaxy_server.lstrip("http://").rstrip("/")
     sed_command = f"""sed -i '/local_slots/ s/[0-9]\+/{thread}/' {job_conf_path}"""
     command = f'ssh -i {ssh_key} {ssh_user}@{galaxy_ip} "sudo {sed_command}"'
     subprocess.Popen(command, shell=True)
@@ -156,7 +156,7 @@ if __name__ == '__main__':
         update_job_conf(options.ssh_user, options.ssh_key, options.galaxy_server, options.job_conf_path, thread)
 
         # Restart galaxy
-        galaxy_ip = options.galaxy_server.lstrip("http://")
+        galaxy_ip = options.galaxy_server.lstrip("http://").rstrip("/")
         restart_command = f'ssh -i {options.ssh_key} {options.ssh_user}@{galaxy_ip} "sudo systemctl restart galaxy"'
         subprocess.Popen(restart_command, shell=True)
 
