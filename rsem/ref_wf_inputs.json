@@ -1,10 +1,10 @@
 {
 	"GRCh38_ref": {
-                "url":"ftp://ftp.ensembl.org/pub/release-83/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                "path":"",
                 "file_type":"fasta"
         },
         "GRCh38_gtf": {
-                "url":"ftp://ftp.ensembl.org/pub/release-83/gtf/homo_sapiens/Homo_sapiens.GRCh38.83.gtf.gz",
+                "path":"",
                 "file_type":"gtf"
         }
 }

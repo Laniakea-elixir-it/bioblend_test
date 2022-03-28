@@ -35,9 +35,9 @@ def upload_and_build_data_input(inputs_path, gi, hist_id, wf_id):
         inputs_dict = json.load(f)
     data = dict()
     for file_name, file_options in inputs_dict.items():
-        file_url = file_options['url']
+        file_path = file_options['path']
         file_type = file_options['file_type']
-        upload = gi.tools.put_url(content=file_url, history_id=hist_id, file_name=file_name, file_type=file_type)
+        upload = gi.tools.upload_file(path=file_path, history_id=hist_id, file_name=file_name, file_type=file_type)
         upload_id = upload['outputs'][0]['id']
         wf_input = gi.workflows.get_workflow_inputs(wf_id, label=file_name)[0]
         data[wf_input] = {'id':upload_id, 'src':'hda'}
