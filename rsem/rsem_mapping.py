@@ -79,8 +79,8 @@ def get_job_metrics(gi, hist_id, invocation_id=None):
                 'tool_id':job['tool_id'],
                 'runtime_value':raw_job_metrics[0]['value'],
                 'runtime_raw_value':raw_job_metrics[0]['raw_value'],
-                'start':raw_job_metrics[1]['value'],
-                'end':raw_job_metrics[2]['value']
+                'start':raw_job_metrics[2]['value'],
+                'end':raw_job_metrics[1]['value']
             }
 
             # Build dictionary with metrics for each job
@@ -124,6 +124,11 @@ if __name__ == '__main__':
 
     # Define Galaxy instance
     gi = bioblend.galaxy.GalaxyInstance(url=options.galaxy_server, key=options.api_key)
+
+    # Delete all histories to ensure there's enough free space
+    history_client = bioblend.galaxy.histories.HistoryClient(gi)
+    for history in history_client.get_histories():
+        history_client.delete_history(history['id'], purge=True)
 
     # Create new history
     new_hist = gi.histories.create_history(name=options.hist_name)
