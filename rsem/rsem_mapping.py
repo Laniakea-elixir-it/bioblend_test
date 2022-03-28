@@ -95,6 +95,11 @@ def update_job_conf(ssh_user, ssh_key, galaxy_server, job_conf_path, thread):
     command = f'ssh -i {ssh_key} {ssh_user}@{galaxy_ip} "sudo {sed_command}"'
     subprocess.Popen(command, shell=True)
 
+def install_dstat(ssh_user, ssh_key, galaxy_server):
+    galaxy_ip = galaxy_server.lstrip("http://").rstrip("/")
+    command = f'ssh -i {ssh_key} {ssh_user}@{galaxy_ip} "sudo yum install -y dstat"'
+    subprocess.Popen(command, shell=True)
+
 def dstat(ssh_user, ssh_key, galaxy_server, output_file, device):
     galaxy_ip = galaxy_server.lstrip("http://").rstrip("/")
     dstat_command = f"dstat --disk-tps -d -t --noheaders -o {output_file} -D {device} > /dev/null"
@@ -135,6 +140,9 @@ if __name__ == '__main__':
     # Make dstat output dir
     galaxy_ip = options.galaxy_server.lstrip("http://").rstrip("/")
     subprocess.Popen(f'ssh -i {options.ssh_key} {options.ssh_user}@{galaxy_ip} "mkdir -p {options.dstat_output_dir}"', shell=True)
+
+    # Install dstat
+    install_dstat(options.ssh_user, options.ssh_key, options.galaxy_server)
 
     # Start dstat monitoring
     kill_dstat(options.ssh_user, options.ssh_key, options.galaxy_server)
