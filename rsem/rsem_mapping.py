@@ -7,6 +7,7 @@ import json
 import subprocess
 import requests
 import time
+from pathlib import Path
 
 ################################################################################
 # COMMAND LINE OPTIONS
@@ -159,6 +160,7 @@ if __name__ == '__main__':
     upload_jobs_metrics = get_job_metrics(gi, hist_id)
 
     # Write upload job metrics to file
+    Path(options.output_dir).mkdir(parents=True, exist_ok=True)
     with open(f'{options.output_dir}/upload_jobs_metrics.json','w', encoding='utf-8') as f:
         json.dump(upload_jobs_metrics, f, ensure_ascii=False, indent=4)
 
