@@ -7,6 +7,7 @@ import json
 import subprocess
 import time
 from pathlib import Path
+import traceback
 
 ################################################################################
 # COMMAND LINE OPTIONS
@@ -152,6 +153,7 @@ if __name__ == '__main__':
             # Move on if upload was successful
             break
         except:
+            traceback.print_exc()
             print('Retrying dataset upload')
 
     # Get upload jobs metrics
