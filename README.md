@@ -23,7 +23,7 @@ An example entry for the `.json` file is:
 The [input_files.json](https://github.com/Laniakea-elixir-it/bioblend-test/blob/main/input_files.json) in this repository is an example of input file for a basic mapping workflow in Galaxy (e.g. [bwa_quality_and_mapping.ga](https://github.com/Laniakea-elixir-it/bioblend-test/blob/main/bwa_quality_and_mapping.ga) in this same repository).
 
 ## Output
-This script outputs a `.json` file containing metrics about the jobs run. For each job run in Galaxy, a key:value pair is written in this file:
+This script outputs two json files, `upload_jobs_metrics.json` and `wf_jobs_metrics.json`, containing metrics about the upload and workflow jobs run repsectively. For each job run in Galaxy, a key:value pair is written in these file:
 
 * The `key` corresponds to the job id;
 * The `value` is a dictionary containing information about the respective job:
@@ -45,6 +45,8 @@ An example of the `.json` file containing the jobs metrics is:
     }
 }
 ```
+These json files are written to the directory specified by the argument `--output-dir`.
+When the script ends, also disk I/O metrics written with dstat in the Galaxy VM are copied to that directory.
 
 # Usage
 Clone this repo to run the script.
@@ -52,9 +54,11 @@ Clone this repo to run the script.
 From the command line, run:
 ```bash
 upload_and_fastqc.py --galaxy-server server \
+                     --ssh-key /path/to/ssh.key
                      --key api_key \
                      --history-name history_name \
                      -i input_files.json \
                      --workflow-path /path/to/workflow.ga \
-                     -o jobs_metrics.json
+                     --output-dir ./metrics
+                     --dstat-device /dev/vdb
 ```
