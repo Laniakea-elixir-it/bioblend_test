@@ -2,7 +2,7 @@
     "a_galaxy_workflow": "true",
     "annotation": "",
     "format-version": "0.1",
-    "name": "rsem-bowtie2_quality_and_mapping",
+    "name": "rsem-bowtie2_ref_in_history",
     "steps": {
         "0": {
             "annotation": "",
@@ -13,26 +13,26 @@
             "inputs": [
                 {
                     "description": "",
-                    "name": "GRCh38_ref"
+                    "name": "rsem_ref"
                 }
             ],
-            "label": "GRCh38_ref",
+            "label": "rsem_ref",
             "name": "Input dataset",
             "outputs": [],
             "position": {
-                "left": 200.01666259765625,
-                "top": 155.39999389648438
+                "left": 207,
+                "top": 316.5
             },
             "tool_id": null,
             "tool_state": "{\"optional\": false}",
             "tool_version": null,
             "type": "data_input",
-            "uuid": "7857e999-eaa9-4df3-97d7-753cbef7e4e3",
+            "uuid": "17fd77de-4cee-4071-943a-0f9a379b0d45",
             "workflow_outputs": [
                 {
                     "label": null,
                     "output_name": "output",
-                    "uuid": "58c74ef0-eecc-4e87-95cf-d448dab36bd4"
+                    "uuid": "4df114ed-2456-4bb1-be33-f3258c490627"
                 }
             ]
         },
@@ -45,26 +45,26 @@
             "inputs": [
                 {
                     "description": "",
-                    "name": "GRCh38_gtf"
+                    "name": "1_reads"
                 }
             ],
-            "label": "GRCh38_gtf",
+            "label": "1_reads",
             "name": "Input dataset",
             "outputs": [],
             "position": {
-                "left": 200.01666259765625,
-                "top": 211.39999389648438
+                "left": 209.01666259765625,
+                "top": 397.75
             },
             "tool_id": null,
             "tool_state": "{\"optional\": false}",
             "tool_version": null,
             "type": "data_input",
-            "uuid": "32d814d7-74d6-45ce-b6b7-89d9b18be3fc",
+            "uuid": "bfedaabc-1eb2-4603-b7ed-b5ed949f384a",
             "workflow_outputs": [
                 {
                     "label": null,
                     "output_name": "output",
-                    "uuid": "d38c1d03-baec-4bba-bfe1-8419cd123e8d"
+                    "uuid": "002d186b-5d0d-4a6b-8dd9-cbaac2b2ca98"
                 }
             ]
         },
@@ -77,38 +77,6 @@
             "inputs": [
                 {
                     "description": "",
-                    "name": "1_reads"
-                }
-            ],
-            "label": "1_reads",
-            "name": "Input dataset",
-            "outputs": [],
-            "position": {
-                "left": 201.01666259765625,
-                "top": 267.3999938964844
-            },
-            "tool_id": null,
-            "tool_state": "{\"optional\": false}",
-            "tool_version": null,
-            "type": "data_input",
-            "uuid": "490e8824-de5e-43d4-acd4-93dfd9f102f9",
-            "workflow_outputs": [
-                {
-                    "label": null,
-                    "output_name": "output",
-                    "uuid": "1552b747-b2af-4670-b315-c2e7234a7f58"
-                }
-            ]
-        },
-        "3": {
-            "annotation": "",
-            "content_id": null,
-            "errors": null,
-            "id": 3,
-            "input_connections": {},
-            "inputs": [
-                {
-                    "description": "",
                     "name": "2_reads"
                 }
             ],
@@ -116,30 +84,30 @@
             "name": "Input dataset",
             "outputs": [],
             "position": {
-                "left": 202.01666259765625,
-                "top": 323.3999938964844
+                "left": 210.01666259765625,
+                "top": 471.75
             },
             "tool_id": null,
             "tool_state": "{\"optional\": false}",
             "tool_version": null,
             "type": "data_input",
-            "uuid": "8f350263-b753-4e85-a3ba-ac77ce560a0d",
+            "uuid": "3e29dc42-0514-4888-b5be-bb4587d16992",
             "workflow_outputs": [
                 {
                     "label": null,
                     "output_name": "output",
-                    "uuid": "de0dde65-df93-483c-b72e-6d37fa00bd3a"
+                    "uuid": "b71c3e60-e3e2-4c32-8579-b7a36730938a"
                 }
             ]
         },
-        "4": {
+        "3": {
             "annotation": "",
             "content_id": "toolshed.g2.bx.psu.edu/repos/devteam/fastqc/fastqc/0.72+galaxy1",
             "errors": null,
-            "id": 4,
+            "id": 3,
             "input_connections": {
                 "input_file": {
-                    "id": 2,
+                    "id": 1,
                     "output_name": "output"
                 }
             },
@@ -170,8 +138,8 @@
                 }
             ],
             "position": {
-                "left": 654.8499755859375,
-                "top": 119.64999389648438
+                "left": 736.8499755859375,
+                "top": 200
             },
             "post_job_actions": {
                 "HideDatasetActionhtml_file": {
@@ -195,45 +163,32 @@
             "tool_state": "{\"adapters\": {\"__class__\": \"RuntimeValue\"}, \"contaminants\": {\"__class__\": \"RuntimeValue\"}, \"input_file\": {\"__class__\": \"ConnectedValue\"}, \"kmers\": \"7\", \"limits\": {\"__class__\": \"RuntimeValue\"}, \"min_length\": \"\", \"nogroup\": \"false\", \"__page__\": null, \"__rerun_remap_job_id__\": null}",
             "tool_version": "0.72+galaxy1",
             "type": "tool",
-            "uuid": "83a1c95b-3bc7-430f-92d3-c8fdf1f92c4c",
+            "uuid": "798abb0d-3b59-4e99-b15a-b71d320de29b",
             "workflow_outputs": []
         },
-        "5": {
+        "4": {
             "annotation": "",
             "content_id": "toolshed.g2.bx.psu.edu/repos/artbio/rsem/rsembowtie2/1.0.1",
             "errors": null,
-            "id": 5,
+            "id": 4,
             "input_connections": {
-                "job|self_reference|gtf": {
+                "run_rsem|input|fastq|fastq1": {
                     "id": 1,
                     "output_name": "output"
                 },
-                "job|self_reference|reference_fasta_file": {
-                    "id": 0,
-                    "output_name": "output"
-                },
-                "run_rsem|input|fastq|fastq1": {
+                "run_rsem|input|fastq|fastq2": {
                     "id": 2,
                     "output_name": "output"
                 },
-                "run_rsem|input|fastq|fastq2": {
-                    "id": 3,
+                "run_rsem|reference|rsem_ref": {
+                    "id": 0,
                     "output_name": "output"
                 }
             },
-            "inputs": [
-                {
-                    "description": "runtime parameter for tool RSEM-Bowtie2",
-                    "name": "job"
-                }
-            ],
+            "inputs": [],
             "label": null,
             "name": "RSEM-Bowtie2",
             "outputs": [
-                {
-                    "name": "reference_file",
-                    "type": "rsem_bt2_ref"
-                },
                 {
                     "name": "gene_abundances",
                     "type": "tabular"
@@ -252,16 +207,10 @@
                 }
             ],
             "position": {
-                "left": 433.61669921875,
-                "top": 113
+                "left": 488.61669921875,
+                "top": 342.3500061035156
             },
-            "post_job_actions": {
-                "HideDatasetActionreference_file": {
-                    "action_arguments": {},
-                    "action_type": "HideDatasetAction",
-                    "output_name": "reference_file"
-                }
-            },
+            "post_job_actions": {},
             "tool_id": "toolshed.g2.bx.psu.edu/repos/artbio/rsem/rsembowtie2/1.0.1",
             "tool_shed_repository": {
                 "changeset_revision": "e00a79cf5f8c",
@@ -269,41 +218,41 @@
                 "owner": "artbio",
                 "tool_shed": "toolshed.g2.bx.psu.edu"
             },
-            "tool_state": "{\"job\": {\"select_job\": \"index\", \"__current_case__\": 0, \"self_reference\": {\"ref_type\": \"genomic\", \"__current_case__\": 1, \"reference_fasta_file\": {\"__class__\": \"RuntimeValue\"}, \"gtf\": {\"__class__\": \"RuntimeValue\"}}, \"transcript_to_gene_map\": {\"__class__\": \"RuntimeValue\"}, \"reference_name\": \"rsem_ref_name\", \"polya\": {\"polya_use\": \"add\", \"__current_case__\": 0, \"polya_length\": \"125\"}, \"ntog\": \"false\"}, \"run_rsem\": {\"select\": \"Yes\", \"__current_case__\": 0, \"sample\": \"rsem_sample\", \"reference\": {\"refSrc\": \"self\", \"__current_case__\": 1}, \"input\": {\"format\": \"fastq\", \"__current_case__\": 0, \"fastq_select\": \"--phred33-quals\", \"fastq\": {\"matepair\": \"paired\", \"__current_case__\": 1, \"fastq1\": {\"__class__\": \"RuntimeValue\"}, \"fastq2\": {\"__class__\": \"RuntimeValue\"}}, \"bowtie2_options\": {\"fullparams\": \"default\", \"__current_case__\": 0}}, \"seedlength\": \"25\", \"forward_prob\": \"0.5\", \"rsem_options\": {\"fullparams\": \"default\", \"__current_case__\": 0}, \"rsem_outputs\": {\"result_bams\": \"default\", \"__current_case__\": 1, \"sampling_for_bam\": \"false\"}}, \"__page__\": null, \"__rerun_remap_job_id__\": null}",
+            "tool_state": "{\"job\": {\"select_job\": \"no-index\", \"__current_case__\": 1}, \"run_rsem\": {\"select\": \"Yes\", \"__current_case__\": 0, \"sample\": \"rsem_sample\", \"reference\": {\"refSrc\": \"history\", \"__current_case__\": 0, \"rsem_ref\": {\"__class__\": \"RuntimeValue\"}}, \"input\": {\"format\": \"fastq\", \"__current_case__\": 0, \"fastq_select\": \"--phred33-quals\", \"fastq\": {\"matepair\": \"paired\", \"__current_case__\": 1, \"fastq1\": {\"__class__\": \"RuntimeValue\"}, \"fastq2\": {\"__class__\": \"RuntimeValue\"}}, \"bowtie2_options\": {\"fullparams\": \"default\", \"__current_case__\": 0}}, \"seedlength\": \"25\", \"forward_prob\": \"0.5\", \"rsem_options\": {\"fullparams\": \"default\", \"__current_case__\": 0}, \"rsem_outputs\": {\"result_bams\": \"default\", \"__current_case__\": 1, \"sampling_for_bam\": \"false\"}}, \"__page__\": null, \"__rerun_remap_job_id__\": null}",
             "tool_version": "1.0.1",
             "type": "tool",
-            "uuid": "51095dad-e9de-4f41-8466-0e6f3995caa6",
+            "uuid": "2a13fad8-56bf-4b32-82da-2aa867094d4e",
             "workflow_outputs": [
                 {
                     "label": null,
-                    "output_name": "gene_abundances",
-                    "uuid": "245096a9-0270-4369-8278-acd055e4c5cb"
+                    "output_name": "log",
+                    "uuid": "d9538243-8e26-489b-9c48-6a5855eb8773"
                 },
                 {
                     "label": null,
-                    "output_name": "isoform_abundances",
-                    "uuid": "3b0e96c5-7885-4e58-b316-9be544a496ef"
+                    "output_name": "gene_abundances",
+                    "uuid": "037b4d3d-0cc6-4872-a1f8-3ea402cfa5d7"
                 },
                 {
                     "label": null,
                     "output_name": "transcript_sorted_bam",
-                    "uuid": "0fc971f6-7be3-49cc-8794-e7e723a6a94b"
+                    "uuid": "17a7fa05-f41c-4ec0-8051-d0df9e2c962c"
                 },
                 {
                     "label": null,
-                    "output_name": "log",
-                    "uuid": "c969994f-a5b9-47e3-9f95-1a6896e999db"
+                    "output_name": "isoform_abundances",
+                    "uuid": "4c0842dd-4d5e-48d0-adc4-ade2191c8bf1"
                 }
             ]
         },
-        "6": {
+        "5": {
             "annotation": "",
             "content_id": "toolshed.g2.bx.psu.edu/repos/devteam/fastqc/fastqc/0.72+galaxy1",
             "errors": null,
-            "id": 6,
+            "id": 5,
             "input_connections": {
                 "input_file": {
-                    "id": 3,
+                    "id": 2,
                     "output_name": "output"
                 }
             },
@@ -334,8 +283,8 @@
                 }
             ],
             "position": {
-                "left": 658.8499755859375,
-                "top": 347.6499938964844
+                "left": 776.8499755859375,
+                "top": 538
             },
             "post_job_actions": {},
             "tool_id": "toolshed.g2.bx.psu.edu/repos/devteam/fastqc/fastqc/0.72+galaxy1",
@@ -348,22 +297,22 @@
             "tool_state": "{\"adapters\": {\"__class__\": \"RuntimeValue\"}, \"contaminants\": {\"__class__\": \"RuntimeValue\"}, \"input_file\": {\"__class__\": \"ConnectedValue\"}, \"kmers\": \"7\", \"limits\": {\"__class__\": \"RuntimeValue\"}, \"min_length\": \"\", \"nogroup\": \"false\", \"__page__\": null, \"__rerun_remap_job_id__\": null}",
             "tool_version": "0.72+galaxy1",
             "type": "tool",
-            "uuid": "a6ed6d1b-de08-421a-8118-92fab654b531",
+            "uuid": "4fef8da4-3366-47db-86c2-2f8b454c3cff",
             "workflow_outputs": [
                 {
                     "label": null,
-                    "output_name": "text_file",
-                    "uuid": "1d0fec5b-27dd-427f-86b1-4689f980b5b3"
+                    "output_name": "html_file",
+                    "uuid": "9c45bfde-33db-43a2-a218-ecc3c2cb36e3"
                 },
                 {
                     "label": null,
-                    "output_name": "html_file",
-                    "uuid": "5cf2b357-6f74-4ff3-ac56-c738c1e5e073"
+                    "output_name": "text_file",
+                    "uuid": "edf7e131-0801-402a-a17c-f53ec0e617ba"
                 }
             ]
         }
     },
     "tags": [],
-    "uuid": "46bfc5aa-f1e2-4693-94f1-9f9705793bfc",
-    "version": 2
+    "uuid": "b7ac0b96-aba2-4b61-a744-742021a8dc2d",
+    "version": 5
 }

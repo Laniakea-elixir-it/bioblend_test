@@ -1,0 +1,138 @@
+{
+    "a_galaxy_workflow": "true",
+    "annotation": "",
+    "format-version": "0.1",
+    "name": "create_rsem_reference",
+    "steps": {
+        "0": {
+            "annotation": "",
+            "content_id": null,
+            "errors": null,
+            "id": 0,
+            "input_connections": {},
+            "inputs": [
+                {
+                    "description": "",
+                    "name": "GRCh38_ref"
+                }
+            ],
+            "label": "GRCh38_ref",
+            "name": "Input dataset",
+            "outputs": [],
+            "position": {
+                "left": 199,
+                "top": 114.5
+            },
+            "tool_id": null,
+            "tool_state": "{\"optional\": false}",
+            "tool_version": null,
+            "type": "data_input",
+            "uuid": "3647a49d-6fa7-4739-96fb-828018ef7cea",
+            "workflow_outputs": [
+                {
+                    "label": null,
+                    "output_name": "output",
+                    "uuid": "35a01a9d-2e7d-4dbf-bc73-000deb22237d"
+                }
+            ]
+        },
+        "1": {
+            "annotation": "",
+            "content_id": null,
+            "errors": null,
+            "id": 1,
+            "input_connections": {},
+            "inputs": [
+                {
+                    "description": "",
+                    "name": "GRCh38_gtf"
+                }
+            ],
+            "label": "GRCh38_gtf",
+            "name": "Input dataset",
+            "outputs": [],
+            "position": {
+                "left": 197,
+                "top": 184.5
+            },
+            "tool_id": null,
+            "tool_state": "{\"optional\": false}",
+            "tool_version": null,
+            "type": "data_input",
+            "uuid": "04c0944b-b46b-4906-8a28-029466b96cad",
+            "workflow_outputs": [
+                {
+                    "label": null,
+                    "output_name": "output",
+                    "uuid": "4bc00e75-03f0-45d2-a1f1-77296fd247f9"
+                }
+            ]
+        },
+        "2": {
+            "annotation": "",
+            "content_id": "toolshed.g2.bx.psu.edu/repos/artbio/rsem/rsembowtie/1.0.1",
+            "errors": null,
+            "id": 2,
+            "input_connections": {
+                "job|self_reference|gtf": {
+                    "id": 1,
+                    "output_name": "output"
+                },
+                "job|self_reference|reference_fasta_file": {
+                    "id": 0,
+                    "output_name": "output"
+                }
+            },
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool RSEM-Bowtie",
+                    "name": "job"
+                }
+            ],
+            "label": null,
+            "name": "RSEM-Bowtie",
+            "outputs": [
+                {
+                    "name": "reference_file",
+                    "type": "rsem_ref"
+                }
+            ],
+            "position": {
+                "left": 505,
+                "top": 113.5
+            },
+            "post_job_actions": {},
+            "tool_id": "toolshed.g2.bx.psu.edu/repos/artbio/rsem/rsembowtie/1.0.1",
+            "tool_shed_repository": {
+                "changeset_revision": "e00a79cf5f8c",
+                "name": "rsem",
+                "owner": "artbio",
+                "tool_shed": "toolshed.g2.bx.psu.edu"
+            },
+            "tool_state": "{\"job\": {\"select_job\": \"index\", \"__current_case__\": 0, \"self_reference\": {\"ref_type\": \"genomic\", \"__current_case__\": 1, \"reference_fasta_file\": {\"__class__\": \"RuntimeValue\"}, \"gtf\": {\"__class__\": \"RuntimeValue\"}}, \"transcript_to_gene_map\": {\"__class__\": \"RuntimeValue\"}, \"reference_name\": \"rsem_ref_name\", \"polya\": {\"polya_use\": \"add\", \"__current_case__\": 0, \"polya_length\": \"125\"}, \"ntog\": \"false\"}, \"run_rsem\": {\"select\": \"No\", \"__current_case__\": 1}, \"__page__\": null, \"__rerun_remap_job_id__\": null}",
+            "tool_version": "1.0.1",
+            "type": "tool",
+            "uuid": "d853a6d9-2fe7-42b8-9581-5463bc239dbb",
+            "workflow_outputs": [
+                {
+                    "label": null,
+                    "output_name": "reference_file",
+                    "uuid": "ef5a0363-c058-4fb7-b858-711dae4e5058"
+                },
+                {
+                    "label": null,
+                    "output_name": "log",
+                    "uuid": "f441ddf8-d883-4bef-8534-6e8e2ed309fc"
+                },
+                {
+                    "label": null,
+                    "output_name": "isoform_abundances",
+                    "uuid": "c7f5169d-c181-4468-ab6c-35015f34ebdf"
+                }
+            ]
+        }
+    },
+    "tags": [],
+    "uuid": "abd9eaad-86a1-4f45-8792-6d336dae8375",
+    "version": 1
+}

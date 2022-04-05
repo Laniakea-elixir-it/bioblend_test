@@ -1,0 +1,10 @@
+{
+        "1_reads": {
+		"url":"https://zenodo.org/record/1409427/files/KO_01_R1.fastq?download=1",
+		"file_type":"fastq"
+	},
+        "2_reads": {
+		"url":"https://zenodo.org/record/1409427/files/KO_01_R2.fastq?download=1",
+		"file_type":"fastq"
+	}
+}

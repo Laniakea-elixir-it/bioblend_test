@@ -1,0 +1,10 @@
+{
+        "GRCh38_ref": {
+		"url":"http://ftp.ensemblgenomes.org/pub/metazoa/release-52/fasta/drosophila_melanogaster/dna/Drosophila_melanogaster.BDGP6.32.dna.primary_assembly.4.fa.gz",
+		"file_type":"fasta"
+	},
+        "GRCh38_gtf": {
+		"url":"http://ftp.ensembl.org/pub/release-105/gtf/drosophila_melanogaster/Drosophila_melanogaster.BDGP6.32.105.gtf.gz",
+		"file_type":"gtf"
+	}
+}

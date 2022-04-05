@@ -4,6 +4,10 @@
 import argparse
 import bioblend.galaxy
 import json
+import subprocess
+import time
+from pathlib import Path
+import traceback
 
 ################################################################################
 # COMMAND LINE OPTIONS
@@ -12,10 +16,96 @@ def cli_options():
     parser.add_argument('--galaxy-server', dest='galaxy_server', default='http://localhost', help='Galaxy server URL')
     parser.add_argument('--key', dest='api_key', default='not_very_secret_api_key', help='Galaxy user API key')
     parser.add_argument('--history-name', default='mapping-test', dest='hist_name', help='New history name')
-    parser.add_argument('-i', dest='inputs_path', default='./input_files.json', help="JSON file containing input files URLs")
+    parser.add_argument('-i', dest='wf_inputs', default='./input_files.json', help="JSON file containing input files URLs")
     parser.add_argument('--workflow-path', default='./quality_and_mapping.ga', dest='wf_path', help='Workflow path')
-    parser.add_argument('-o', default='./jobs_metrics.json', dest='output_file', help="Path in which jobs metrics are written")
+    parser.add_argument('--ssh-user', default='Pietro', dest='ssh_user', help='Galaxy vm ssh user')
+    parser.add_argument('--ssh-key', default='~/.ssh/laniakea-robot.key', dest='ssh_key', help='Galaxy vm ssh key')
+    parser.add_argument('--dstat-output-dir', default='~/dstat_out', dest='dstat_output_dir', help='dstat output dir')
+    parser.add_argument('--dstat-device', default='vdb1', dest='dstat_device', help='dstat device to monitor')
+    parser.add_argument('--output-dir', default='.', dest='output_dir', help="Path in which jobs metrics are written")
     return parser.parse_args()
+
+
+def upload_and_build_data_input(inputs_path, gi, hist_id, wf_id):
+    with open(inputs_path, 'r') as f:
+        inputs_dict = json.load(f)
+    data = dict()
+    for file_name, file_options in inputs_dict.items():
+        file_url = file_options['url']
+        file_type = file_options['file_type']
+        upload = gi.tools.put_url(file_url, history_id=hist_id, file_name=file_name, file_type=file_type)
+        upload_id = upload['outputs'][0]['id']
+        wf_input = gi.workflows.get_workflow_inputs(wf_id, label=file_name)[0]
+        data[wf_input] = {'id':upload_id, 'src':'hda'}
+    return data
+
+
+def wait_for_dataset(gi, hist_id):
+    dataset_client = bioblend.galaxy.datasets.DatasetClient(gi)
+    all_datasets = dataset_client.get_datasets(history_id=hist_id)
+    for dataset in all_datasets:
+        dataset_client.wait_for_dataset(dataset['id'])
+
+def get_job_metrics(gi, hist_id, invocation_id=None):
+    job_client = bioblend.galaxy.jobs.JobsClient(gi)
+    wf_jobs = job_client.get_jobs(history_id=hist_id)
+    #print(wf_jobs)
+
+    # Define filter for jobs
+    if invocation_id is not None:
+        invocation_client = bioblend.galaxy.invocations.InvocationClient(gi)
+        invocation_steps = invocation_client.show_invocation(invocation_id)['steps']
+        jobs_filter = [step['job_id'] for step in invocation_steps]
+    else:
+        jobs_filter = [job['id'] for job in wf_jobs]
+
+    jobs_metrics = dict()
+
+    for job in wf_jobs:
+        job_id = job['id']
+        if job_id in jobs_filter:
+            # Wait for the job to be finished
+            job_client.wait_for_job(job_id)
+
+            # Get raw job metrics
+            raw_job_metrics = job_client.get_metrics(job_id)
+
+            # Take useful job metrics
+            job_metrics = {
+                'tool_id':job['tool_id'],
+                'runtime_value':raw_job_metrics[0]['value'],
+                'runtime_raw_value':raw_job_metrics[0]['raw_value'],
+                'start':raw_job_metrics[2]['value'],
+                'end':raw_job_metrics[1]['value']
+            }
+
+            # Build dictionary with metrics for each job
+            jobs_metrics[job_id] = job_metrics
+
+    return jobs_metrics
+
+
+def install_dstat(ssh_user, ssh_key, galaxy_ip):
+    command = f'ssh -i {ssh_key} {ssh_user}@{galaxy_ip} "sudo yum install -y dstat"'
+    subprocess.Popen(command, shell=True)
+
+
+def dstat(ssh_user, ssh_key, galaxy_ip, output_file, device):
+    dstat_command = f"dstat --disk-tps -d -t --noheaders -o {output_file} -D {device} > /dev/null"
+    command = f'ssh -i {ssh_key} {ssh_user}@{galaxy_ip} "{dstat_command}"'
+    subprocess.Popen(command, shell=True)
+
+
+def kill_dstat(ssh_user, ssh_key, galaxy_ip):
+    command = f'ssh -i {ssh_key} {ssh_user}@{galaxy_ip} "pkill -9 dstat > /dev/null"'
+    subprocess.Popen(command, shell=True)
+    time.sleep(5)
+
+
+def get_dstat_out(ssh_user, ssh_key, galaxy_ip, dstat_output_dir, output_dir):
+    scp_command = f'scp -r -i {ssh_key} {ssh_user}@{galaxy_ip}:{dstat_output_dir} {output_dir}'
+    subprocess.Popen(scp_command, shell=True)
+
 
 
 if __name__ == '__main__':
@@ -25,52 +115,74 @@ if __name__ == '__main__':
     # Define Galaxy instance
     gi = bioblend.galaxy.GalaxyInstance(url=options.galaxy_server, key=options.api_key)
 
-    # Create new history
-    new_hist = gi.histories.create_history(name=options.hist_name)
+    # Install dstat
+    galaxy_ip = options.galaxy_server.lstrip("http://").rstrip("/")
+    install_dstat(options.ssh_user, options.ssh_key, galaxy_ip)
 
-    # Import workflow from file
-    wf = gi.workflows.import_workflow_from_local_path(options.wf_path)
-    workflow_id = wf['id']
+    while True:
+        try: 
+            # Delete all histories to ensure there's enough free space
+            history_client = bioblend.galaxy.histories.HistoryClient(gi)
+            for history in history_client.get_histories():
+                history_client.delete_history(history['id'], purge=True)
 
-    # Get input files url from inputs_path
-    with open(options.inputs_path, 'r') as f:
-        inputs_dict = json.load(f)
-    
-    # Initialize dictionary for wf input data
-    data = dict()
+            # Create new history
+            new_hist = gi.histories.create_history(name=options.hist_name)
+            hist_id = new_hist['id']
 
-    # Upload each file in history and put its id in the data dictionary
-    for file_name, file_url in inputs_dict.items():
-        upload = gi.tools.put_url(content=file_url, history_id=new_hist['id'], file_name=file_name)
-        upload_id = upload['outputs'][0]['id']
-        wf_input = gi.workflows.get_workflow_inputs(workflow_id, label=file_name)[0]
-        data[wf_input] = {'id':upload_id, 'src':'hda'}
-    
+            # Import workflow from file
+            wf = gi.workflows.import_workflow_from_local_path(options.wf_path)
+            wf_id = wf['id']
 
-    wf_return = gi.workflows.invoke_workflow(wf['id'], inputs=data, history_id=new_hist['id'])
-    print(wf_return)
+            # Remove dstat output dir if present and make a new one
+            subprocess.Popen(f'ssh -i {options.ssh_key} {options.ssh_user}@{galaxy_ip} "rm -rf {options.dstat_output_dir}"', shell=True)
+            time.sleep(5)
+            subprocess.Popen(f'ssh -i {options.ssh_key} {options.ssh_user}@{galaxy_ip} "mkdir -p {options.dstat_output_dir}"', shell=True)
 
-    jobs_details = bioblend.galaxy.jobs.JobsClient(gi)
-    all_jobs = jobs_details.get_jobs(history_id=new_hist['id'])
-    jobs_metrics = dict()
+            # Start dstat monitoring
+            kill_dstat(options.ssh_user, options.ssh_key, galaxy_ip)
+            dstat_output_file = f'{options.dstat_output_dir}/dstat_out_upload.csv'
+            dstat(options.ssh_user, options.ssh_key, galaxy_ip, dstat_output_file, options.dstat_device)
 
-    for job in reversed(all_jobs):
-        # Wait for the job to be finished
-        jobs_details.wait_for_job(job['id'])
+            # Upload input data and build dictionary for workflow
+            wf_data = upload_and_build_data_input(inputs_path=options.wf_inputs, gi=gi, hist_id=hist_id, wf_id=wf_id)
 
-        # Get raw job metrics
-        raw_job_metrics = jobs_details.get_metrics(job['id'])
+            # Wait for dataset
+            wait_for_dataset(gi, hist_id)
 
-        # Take useful job metrics
-        job_metrics = {
-            'runtime_value':raw_job_metrics[0]['value'],
-            'runtime_raw_value':raw_job_metrics[0]['raw_value'],
-            'start':raw_job_metrics[1]['value'],
-            'end':raw_job_metrics[2]['value']
-        }
+            # Move on if upload was successful
+            break
+        except:
+            traceback.print_exc()
+            print('Retrying dataset upload')
 
-        # Build dictionary with metrics for each job
-        jobs_metrics[job['id']] = job_metrics
-    
-    with open(options.output_file, 'w', encoding='utf-8') as f:
-        json.dump(jobs_metrics, f, ensure_ascii=False, indent=4)
+    # Get upload jobs metrics
+    upload_jobs_metrics = get_job_metrics(gi, hist_id)
+
+    # Write upload job metrics to file
+    Path(options.output_dir).mkdir(parents=True, exist_ok=True)
+    with open(f'{options.output_dir}/upload_jobs_metrics.json','w', encoding='utf-8') as f:
+        json.dump(upload_jobs_metrics, f, ensure_ascii=False, indent=4)
+
+    # Kill running dstat process and start new dstat process
+    kill_dstat(options.ssh_user, options.ssh_key, galaxy_ip)
+    dstat_output_file = f'{options.dstat_output_dir}/dstat_out_wf.csv'
+    dstat(options.ssh_user, options.ssh_key, galaxy_ip, dstat_output_file, options.dstat_device)
+
+    # Invoke workflow
+    wf_invocation = gi.workflows.invoke_workflow(wf_id, inputs=wf_data, history_id=hist_id)
+    wf_invocation_id = wf_invocation['id']
+    invocation_client = bioblend.galaxy.invocations.InvocationClient(gi)
+    invocation_client.wait_for_invocation(wf_invocation_id)
+
+    # Get workflow job metrics
+    wf_jobs_metrics = get_job_metrics(gi=gi, hist_id=hist_id, invocation_id=wf_invocation_id)
+
+    # Write workflow job metrics to file
+    with open(f'{options.output_dir}/wf_jobs_metrics.json', 'w', encoding='utf-8') as f:
+        json.dump(wf_jobs_metrics, f, ensure_ascii=False, indent=4)
+
+    # Kill dstat process
+    kill_dstat(options.ssh_user, options.ssh_key, galaxy_ip)
+
+    get_dstat_out(options.ssh_user, options.ssh_key, galaxy_ip, options.dstat_output_dir, options.output_dir)
