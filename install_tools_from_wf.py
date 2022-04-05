@@ -1,4 +1,3 @@
-
 #! /usr/bin/env python3
 
 # Import dependencies
@@ -28,15 +27,19 @@ def wf_tools_repo(wf_path):
         pass
     return tool_list
 
-if __name__ == '__main__':
+def install_tools(galaxy_server,api_key,wf_path):
 
-    options = cli_options()
 
     # Define Galaxy instance
-    gi = bioblend.galaxy.GalaxyInstance(url=options.galaxy_server, key=options.api_key)
+    gi = bioblend.galaxy.GalaxyInstance(url=galaxy_server, key=api_key)
     
     #install galaxy tools
     install_tools = bioblend.galaxy.toolshed.ToolShedClient(gi)
-    repos = wf_tools_repo(options.wf_path)
+    repos = wf_tools_repo(wf_path)
     for i in repos: 
         install_tools.install_repository_revision('https://'+i['tool_shed'],i['name'],i['owner'],i['changeset_revision'],True,True,True,True,None)
+
+if __name__ == '__main__':
+    options = cli_options()
+    install_tools(options.galaxy_server,options.api_key,options.wf_path)
+
