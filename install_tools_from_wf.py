@@ -17,14 +17,14 @@ def wf_tools_repo(wf_path):
 
     tool_list = list()
     with open(wf_path, 'r') as f:
-      wf_dict = json.load(f)
+        wf_dict = json.load(f)
     for i,o in wf_dict['steps'].items():
-      try:
-        install_info = o['tool_shed_repository']
-        if install_info not in tool_list:
-          tool_list.append(install_info)
-      except:
-        pass
+        try:
+            install_info = o['tool_shed_repository']
+            if install_info not in tool_list:
+                tool_list.append(install_info)
+        except:
+            pass
     return tool_list
 
 def install_tools(galaxy_server,api_key,wf_path):
@@ -35,9 +35,17 @@ def install_tools(galaxy_server,api_key,wf_path):
     
     #install galaxy tools
     install_tools = bioblend.galaxy.toolshed.ToolShedClient(gi)
-    repos = wf_tools_repo(wf_path)
-    for i in repos: 
-        install_tools.install_repository_revision('https://'+i['tool_shed'],i['name'],i['owner'],i['changeset_revision'],True,True,True,True,None)
+    wf_repos = wf_tools_repo(wf_path)
+    for i in wf_repos:
+        tool_name = i['name']
+        changeset_revision = i['changeset_revision']
+        install_tools.install_repository_revision('https://'+i['tool_shed'],tool_name,i['owner'],changeset_revision,True,True,True,True,None)
+        print(f'Installing tool {tool_name} and its dependencies...')
+        status = ''
+        while status != 'Installed':
+            installed_repos = install_tools.get_repositories()
+            status = [repo['status'] for repo in installed_repos if repo['name']==tool_name and repo['changeset_revision']==changeset_revision][0]
+        print(f'Tool {tool_name} installed successfully.')
 
 if __name__ == '__main__':
     options = cli_options()
