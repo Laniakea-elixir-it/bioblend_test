@@ -18,7 +18,7 @@ class DstatClient:
 
     def prepare_dstat_dir(self, dstat_output_dir):
         self.output_dir = dstat_output_dir
-        cmd = self.build_command("rm -rf {self.output_dir}; mkdir -p {self.output_dir}")
+        cmd = self.build_command(f"rm -rf {self.output_dir}; mkdir -p {self.output_dir}")
         subprocess.Popen(cmd, shell=True)
 
     def run_dstat(self, device, dstat_output_file):

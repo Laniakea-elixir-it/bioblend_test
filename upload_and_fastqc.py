@@ -56,7 +56,7 @@ def wait_for_dataset(galaxy_instance, history_id):
 
 def get_job_metrics(galaxy_instance, history_id, invocation_id):
     job_client = bioblend.galaxy.jobs.JobsClient(galaxy_instance)
-    wf_jobs = job_client.get_jobs(history_id=history_id)
+    history_jobs = job_client.get_jobs(history_id=history_id)
 
     # Define filter for jobs
     if invocation_id is not None:
@@ -64,7 +64,7 @@ def get_job_metrics(galaxy_instance, history_id, invocation_id):
         invocation_steps = invocation_client.show_invocation(invocation_id)['steps']
         jobs_filter = [step['job_id'] for step in invocation_steps]
     else:
-        jobs_filter = [job['id'] for job in wf_jobs]
+        jobs_filter = [job['id'] for job in history_jobs]
 
     jobs_metrics = dict()
 
@@ -123,7 +123,7 @@ def run_workflow(galaxy_instance, history_id, wf_path, wf_inputs_path, log_disk_
         dstat_ssh_client = DstatClient(ssh_key, ssh_user, endpoint_ip)
         dstat_ssh_client.install_dstat()
         dstat_ssh_client.kill_dstat()
-        prepare_dstat_dir(dstat_output_dir)
+        dstat_ssh_client.prepare_dstat_dir(dstat_output_dir)
     
     # Import workflow from file
     wf = galaxy_instance.workflows.import_workflow_from_local_path(wf_path)
@@ -131,7 +131,7 @@ def run_workflow(galaxy_instance, history_id, wf_path, wf_inputs_path, log_disk_
     
     # Start logging disk metrics for upload
     if log_disk_metrics:
-        dstat_ssh_client.run_dstat(dstat_output_dir, device, dstat_output_file='dstat_out_upload.csv')
+        dstat_ssh_client.run_dstat(device, dstat_output_file='dstat_out_upload.csv')
 
     # Upload input data and build dictionary for workflow
     workflow_data = upload_and_build_data_input(wf_inputs_path, galaxy_instance, history_id, workflow_id)
