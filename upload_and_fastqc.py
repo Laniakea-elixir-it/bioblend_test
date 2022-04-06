@@ -68,7 +68,7 @@ def get_job_metrics(galaxy_instance, history_id, invocation_id):
 
     jobs_metrics = dict()
 
-    for job in wf_jobs:
+    for job in history_jobs:
         job_id = job['id']
         if job_id in jobs_filter:
             # Wait for the job to be finished
