@@ -7,6 +7,7 @@ import json
 import subprocess
 import time
 from pathlib import Path
+import os
 import traceback
 from dstat import DstatClient
 
@@ -97,8 +98,9 @@ def write_jobs_metrics(galaxy_instance, history_id, output_file, invocation_id=N
     upload_jobs_metrics = get_job_metrics(galaxy_instance, history_id, invocation_id)
 
     # Write upload job metrics to file
+    output_dir = os.path.dirname(output_file)
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    with open(f'{output_dir}/{output_file}','w', encoding='utf-8') as f:
+    with open(output_file,'w', encoding='utf-8') as f:
         json.dump(upload_jobs_metrics, f, ensure_ascii=False, indent=4)
 
 
@@ -151,8 +153,7 @@ def run_workflow(galaxy_instance, history_id, wf_path, wf_inputs_path, log_disk_
     # Stop dstat and write wf jobs metrics
     if log_disk_metrics:
         dstat_ssh_client.kill_dstat()
-        write_jobs_metrics(galaxy_instance, history_id, metrics_output_dir,
-                           metrics_output_file='wf_jobs_metrics.json', invocation_id=wf_invocation_id)
+        write_jobs_metrics(galaxy_instance, history_id, output_file=f'{metrics_output_dir}/wf_jobs_metrics.json', invocation_id=wf_invocation_id)
         dstat_ssh_client.get_dstat_out(metrics_output_dir)
 
 
