@@ -10,7 +10,7 @@ class DstatClient:
         self.endpoint = endpoint_ip
 
     def build_command(self, cmd):
-        return command = f'ssh -i {self.ssh_key} {self.ssh_user}@{self.endpoint} "{cmd}"'
+        return f'ssh -i {self.ssh_key} {self.ssh_user}@{self.endpoint} "{cmd}"'
 
     def install_dstat(self):
         cmd = self.build_command("sudo yum install -y dstat")

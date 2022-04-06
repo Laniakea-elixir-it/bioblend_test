@@ -8,7 +8,7 @@ import subprocess
 import time
 from pathlib import Path
 import traceback
-from .dstat import DstatClient
+from dstat import DstatClient
 
 ################################################################################
 # COMMAND LINE OPTIONS
@@ -16,7 +16,7 @@ def cli_options():
     parser = argparse.ArgumentParser(description='Galaxy URL upload and FastQC test')
     parser.add_argument('--endpoint', dest='endpoint', default='http://localhost', help='Galaxy server URL')
     parser.add_argument('--api-key', dest='api_key', default='not_very_secret_api_key', help='Galaxy user API key')
-    parser.add_argument('--history-name', default='wf-test', dest='hist_name', help='New history name')
+    parser.add_argument('--history-name', default='wf-test', dest='history_name', help='New history name')
     parser.add_argument('--clean-histories', default=False, dest='clean_histories', action='store_true', help='If set, all histories will be deleted before running the workflow')
     parser.add_argument('-i', dest='wf_inputs_path', default='./input_files.json', help="JSON file containing input files URLs")
     parser.add_argument('--wf-path', default='./test_workflow.ga', dest='wf_path', help='Workflow path')
@@ -55,7 +55,7 @@ def wait_for_dataset(galaxy_instance, history_id):
 
 
 def get_job_metrics(galaxy_instance, history_id, invocation_id):
-    job_client = bioblend.galaxy.jobs.JobsClient(gi)
+    job_client = bioblend.galaxy.jobs.JobsClient(galaxy_instance)
     wf_jobs = job_client.get_jobs(history_id=history_id)
 
     # Define filter for jobs
@@ -127,14 +127,14 @@ def run_workflow(galaxy_instance, history_id, wf_path, wf_inputs_path, log_disk_
     
     # Import workflow from file
     wf = galaxy_instance.workflows.import_workflow_from_local_path(wf_path)
-    wf_id = wf['id']
+    workflow_id = wf['id']
     
     # Start logging disk metrics for upload
     if log_disk_metrics:
         dstat_ssh_client.run_dstat(dstat_output_dir, device, dstat_output_file='dstat_out_upload.csv')
 
     # Upload input data and build dictionary for workflow
-    wf_data = upload_and_build_data_input(wf_inputs_path, galaxy_instance, history_id, workflow_id)
+    workflow_data = upload_and_build_data_input(wf_inputs_path, galaxy_instance, history_id, workflow_id)
 
     # Stop dstat, write upload jobs metrics and restart dstat for wf disk monitoring
     if log_disk_metrics:
@@ -143,9 +143,9 @@ def run_workflow(galaxy_instance, history_id, wf_path, wf_inputs_path, log_disk_
         dstat_ssh_client.run_dstat(device, dstat_output_file='dstat_out_wf.csv')
     
     # Invoke workflow
-    wf_invocation = galaxy_instance.workflows.invoke_workflow(workflow_id, wf_data, history_id)
+    wf_invocation = galaxy_instance.workflows.invoke_workflow(workflow_id, workflow_data, history_id=history_id)
     wf_invocation_id = wf_invocation['id']
-    invocation_client = bioblend.galaxy.invocations.InvocationClient(gi)
+    invocation_client = bioblend.galaxy.invocations.InvocationClient(galaxy_instance)
     invocation_client.wait_for_invocation(wf_invocation_id)
 
     # Stop dstat and write wf jobs metrics
@@ -157,14 +157,15 @@ def run_workflow(galaxy_instance, history_id, wf_path, wf_inputs_path, log_disk_
 
 
 def run_galaxy_tools(endpoint, api_key, history_name, wf_path, wf_inputs_path, clean_histories=False,
-                     log_disk_metrics=False, metrics_output_dir=None, dstat_output_dir=None, device=None):
+                     log_disk_metrics=False, metrics_output_dir=None, dstat_output_dir=None,
+                     device=None, ssh_key=None, ssh_user=None):
 
     galaxy_instance = bioblend.galaxy.GalaxyInstance(url=endpoint, key=api_key)
 
     history_id = create_history(galaxy_instance, history_name, clean_histories)
 
     run_workflow(galaxy_instance, history_id, wf_path, wf_inputs_path, log_disk_metrics,
-                 metrics_output_dir, dstat_output_dir, device)
+                 metrics_output_dir, dstat_output_dir, device, ssh_key, ssh_user)
 
 
 if __name__ == '__main__':
