@@ -4,6 +4,7 @@
 import argparse
 import bioblend.galaxy
 import json
+import time
 
 # COMMAND LINE OPTIONS
 def cli_options():
@@ -48,6 +49,7 @@ def install_tools(galaxy_server,api_key,wf_path):
         while status != 'Installed':
             installed_repos = install_tools.get_repositories()
             status = [repo['status'] for repo in installed_repos if repo['name']==tool_name and repo['changeset_revision']==changeset_revision][0]
+            time.sleep(5)
         print(f'Tool {tool_name} installed successfully.')
 
 if __name__ == '__main__':
