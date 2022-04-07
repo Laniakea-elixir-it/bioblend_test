@@ -4,11 +4,8 @@
 import argparse
 import bioblend.galaxy
 import json
-import subprocess
-import time
 from pathlib import Path
 import os
-import traceback
 from dstat import DstatClient
 
 ################################################################################
