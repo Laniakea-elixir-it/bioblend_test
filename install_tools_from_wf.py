@@ -11,7 +11,7 @@ def cli_options():
     parser = argparse.ArgumentParser(description='Galaxy install all workflows tools using bioblend')
     parser.add_argument('--endpoint', dest='galaxy_server', default='http://localhost', help='Galaxy server URL')
     parser.add_argument('--api-key', dest='api_key', default='not_very_secret_api_key', help='Galaxy user API key')
-    parser.add_argument('--wf-path', default='./test_workflow.ga', dest='wf_path', help='Workflow path')
+    parser.add_argument('--wf-path', default='./workflows/test_workflow.ga', dest='wf_path', help='Workflow path')
     return parser.parse_args()
 
 def wf_tools_repo(wf_path):
