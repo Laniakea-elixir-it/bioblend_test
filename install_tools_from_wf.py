@@ -39,7 +39,10 @@ def install_tools(galaxy_server,api_key,wf_path):
     for i in wf_repos:
         tool_name = i['name']
         changeset_revision = i['changeset_revision']
-        install_tools.install_repository_revision('https://'+i['tool_shed'],tool_name,i['owner'],changeset_revision,True,True,True,True,None)
+        try:
+            install_tools.install_repository_revision('https://'+i['tool_shed'],tool_name,i['owner'],changeset_revision,True,True,True,True,None)
+        except bioblend.ConnectionError:
+            pass
         print(f'Installing tool {tool_name} and its dependencies...')
         status = ''
         while status != 'Installed':
