@@ -155,6 +155,10 @@ def run_workflow(galaxy_instance, history_id, wf_path, wf_inputs_path, log_disk_
         dstat_ssh_client.kill_dstat()
         write_jobs_metrics(galaxy_instance, history_id, output_file=f'{metrics_output_dir}/wf_jobs_metrics.json', invocation_id=wf_invocation_id)
         dstat_ssh_client.get_dstat_out(metrics_output_dir)
+    wf_result = get_job_metrics(galaxy_instance, history_id, wf_invocation_id)
+    print("WORKFLOW SUCCEDED WITH THE FOLLOWING STATS:")
+    wf_stats = json.dumps(wf_result, indent=4, sort_keys=True)
+    print(wf_stats)
 
 
 def run_galaxy_tools(endpoint, api_key, history_name, wf_path, wf_inputs_path, clean_histories=False,
