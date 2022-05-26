@@ -152,8 +152,8 @@ def run_workflow(galaxy_instance, history_id, wf_path, wf_inputs_path, log_disk_
 
     # Stop dstat and write wf jobs metrics
     if log_disk_metrics:
-        dstat_ssh_client.kill_dstat()
         write_jobs_metrics(galaxy_instance, history_id, output_file=f'{metrics_output_dir}/wf_jobs_metrics.json', invocation_id=wf_invocation_id)
+        dstat_ssh_client.kill_dstat()
         dstat_ssh_client.get_dstat_out(metrics_output_dir)
     wf_result = get_job_metrics(galaxy_instance, history_id, wf_invocation_id)
     print("WORKFLOW SUCCEDED WITH THE FOLLOWING STATS:")

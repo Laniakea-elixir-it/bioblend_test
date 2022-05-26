@@ -1,0 +1,10 @@
+{
+    "1_reads": {
+            "url":"ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR861/003/SRR8615643/SRR8615643_1.fastq.gz",
+            "file_type":"fastqsanger"
+    },
+    "2_reads": {
+            "url":"ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR861/003/SRR8615643/SRR8615643_2.fastq.gz",
+            "file_type":"fastqsanger"
+    }
+}
