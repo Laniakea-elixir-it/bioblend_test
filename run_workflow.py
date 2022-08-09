@@ -6,10 +6,11 @@ import bioblend.galaxy
 import json
 from pathlib import Path
 import os
+from urllib.parse import urlparse
 
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__)))
-from dstat import DstatClient
+from dstat import SSHClient
 
 ################################################################################
 # COMMAND LINE OPTIONS
@@ -77,14 +78,17 @@ def get_job_metrics(galaxy_instance, history_id, invocation_id):
 
             # Get raw job metrics
             raw_job_metrics = job_client.get_metrics(job_id)
+            start_job_metrics = list(filter(lambda x: x['title']=='Job Start Time', raw_job_metrics))[0]
+            end_job_metrics = list(filter(lambda x: x['title']=='Job End Time', raw_job_metrics))[0]
+            runtime_job_metrics = list(filter(lambda x: x['title']=='Job Runtime (Wall Clock)', raw_job_metrics))[0]
 
             # Take useful job metrics
             job_metrics = {
                 'tool_id':job['tool_id'],
-                'runtime_value':raw_job_metrics[0]['value'],
-                'runtime_raw_value':raw_job_metrics[0]['raw_value'],
-                'start':raw_job_metrics[2]['value'],
-                'end':raw_job_metrics[1]['value']
+                'runtime_value':runtime_job_metrics['value'],
+                'runtime_raw_value':runtime_job_metrics['raw_value'],
+                'start':start_job_metrics['value'],
+                'end':end_job_metrics['value']
             }
 
             # Build dictionary with metrics for each job
@@ -103,6 +107,15 @@ def write_jobs_metrics(galaxy_instance, history_id, output_file, invocation_id=N
     with open(output_file,'w', encoding='utf-8') as f:
         json.dump(upload_jobs_metrics, f, ensure_ascii=False, indent=4)
 
+def clean_histories_files(galaxy_instance, ssh_client):
+    # Purge histories
+    history_client = bioblend.galaxy.histories.HistoryClient(galaxy_instance)
+    for history in history_client.get_histories():
+        history_client.delete_history(history['id'], purge=True)
+
+    # Clean files leftovers
+    ssh_client.run_command('sudo rm /export/galaxy/database/tmp/*url* /export/galaxy/database/files/000/*')
+
 
 def create_history(galaxy_instance, history_name, clean_histories=False):
     # Delete all histories to ensure there's enough free space
@@ -117,15 +130,13 @@ def create_history(galaxy_instance, history_name, clean_histories=False):
 
 
 def run_workflow(galaxy_instance, history_id, wf_path, wf_inputs_path, log_disk_metrics=False,
-                 metrics_output_dir=None, dstat_output_dir=None, device=None, ssh_key=None, ssh_user=None):
+                 metrics_output_dir=None, dstat_output_dir=None, device=None, ssh_client=None):
     
     # Prepare endpoint to log disk metrics with dstat
     if log_disk_metrics:
-        endpoint_ip = galaxy_instance.url.lstrip("http://").rstrip("/api")
-        dstat_ssh_client = DstatClient(ssh_key, ssh_user, endpoint_ip)
-        dstat_ssh_client.install_dstat()
-        dstat_ssh_client.kill_dstat()
-        dstat_ssh_client.prepare_dstat_dir(dstat_output_dir)
+        ssh_client.install_dstat()
+        ssh_client.kill_dstat()
+        ssh_client.prepare_dstat_dir(dstat_output_dir)
     
     # Import workflow from file
     wf = galaxy_instance.workflows.import_workflow_from_local_path(wf_path)
@@ -133,16 +144,16 @@ def run_workflow(galaxy_instance, history_id, wf_path, wf_inputs_path, log_disk_
     
     # Start logging disk metrics for upload
     if log_disk_metrics:
-        dstat_ssh_client.run_dstat(device, dstat_output_file='dstat_out_upload.csv')
+        ssh_client.run_dstat(device, dstat_output_file='dstat_out_upload.csv')
 
     # Upload input data and build dictionary for workflow
     workflow_data = upload_and_build_data_input(wf_inputs_path, galaxy_instance, history_id, workflow_id)
 
     # Stop dstat, write upload jobs metrics and restart dstat for wf disk monitoring
     if log_disk_metrics:
-        dstat_ssh_client.kill_dstat()
+        ssh_client.kill_dstat()
         write_jobs_metrics(galaxy_instance, history_id, output_file=f'{metrics_output_dir}/upload_jobs_metrics.json')
-        dstat_ssh_client.run_dstat(device, dstat_output_file='dstat_out_wf.csv')
+        ssh_client.run_dstat(device, dstat_output_file='dstat_out_wf.csv')
     
     # Invoke workflow
     wf_invocation = galaxy_instance.workflows.invoke_workflow(workflow_id, workflow_data, history_id=history_id)
@@ -153,8 +164,8 @@ def run_workflow(galaxy_instance, history_id, wf_path, wf_inputs_path, log_disk_
     # Stop dstat and write wf jobs metrics
     if log_disk_metrics:
         write_jobs_metrics(galaxy_instance, history_id, output_file=f'{metrics_output_dir}/wf_jobs_metrics.json', invocation_id=wf_invocation_id)
-        dstat_ssh_client.kill_dstat()
-        dstat_ssh_client.get_dstat_out(metrics_output_dir)
+        ssh_client.kill_dstat()
+        ssh_client.get_dstat_out(metrics_output_dir)
     wf_result = get_job_metrics(galaxy_instance, history_id, wf_invocation_id)
     print("WORKFLOW SUCCEDED WITH THE FOLLOWING STATS:")
     wf_stats = json.dumps(wf_result, indent=4, sort_keys=True)
@@ -167,10 +178,16 @@ def run_galaxy_tools(endpoint, api_key, history_name, wf_path, wf_inputs_path, c
 
     galaxy_instance = bioblend.galaxy.GalaxyInstance(url=endpoint, key=api_key)
 
+    endpoint_ip = urlparse(endpoint).netloc
+    ssh_client = SSHClient(ssh_key, ssh_user, endpoint_ip)
+
+    if clean_histories:
+        clean_histories_files(galaxy_instance, ssh_client)
+
     history_id = create_history(galaxy_instance, history_name, clean_histories)
 
     run_workflow(galaxy_instance, history_id, wf_path, wf_inputs_path, log_disk_metrics,
-                 metrics_output_dir, dstat_output_dir, device, ssh_key, ssh_user)
+                 metrics_output_dir, dstat_output_dir, device, ssh_client)
 
 
 if __name__ == '__main__':
