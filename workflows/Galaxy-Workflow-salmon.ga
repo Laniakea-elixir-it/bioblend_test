@@ -1,0 +1,183 @@
+{
+    "a_galaxy_workflow": "true",
+    "annotation": "",
+    "format-version": "0.1",
+    "name": "fastqc_and_salmon",
+    "steps": {
+        "0": {
+            "annotation": "",
+            "content_id": null,
+            "errors": null,
+            "id": 0,
+            "input_connections": {},
+            "inputs": [
+                {
+                    "description": "",
+                    "name": "1_reads"
+                }
+            ],
+            "label": "1_reads",
+            "name": "Input dataset",
+            "outputs": [],
+            "position": {
+                "left": 125.39999389648438,
+                "top": 112
+            },
+            "tool_id": null,
+            "tool_state": "{\"optional\": false}",
+            "tool_version": null,
+            "type": "data_input",
+            "uuid": "477e8de2-3e12-4dc8-b4bf-7ff491f53803",
+            "workflow_outputs": [
+                {
+                    "label": null,
+                    "output_name": "output",
+                    "uuid": "9af7c2c6-0baa-44e2-8613-676954a2d90e"
+                }
+            ]
+        },
+        "1": {
+            "annotation": "",
+            "content_id": null,
+            "errors": null,
+            "id": 1,
+            "input_connections": {},
+            "inputs": [
+                {
+                    "description": "",
+                    "name": "2_reads"
+                }
+            ],
+            "label": "2_reads",
+            "name": "Input dataset",
+            "outputs": [],
+            "position": {
+                "left": 130.79998779296875,
+                "top": 186.39999389648438
+            },
+            "tool_id": null,
+            "tool_state": "{\"optional\": false}",
+            "tool_version": null,
+            "type": "data_input",
+            "uuid": "61dbae47-96d3-4069-bdc4-57970c8ee6c0",
+            "workflow_outputs": [
+                {
+                    "label": null,
+                    "output_name": "output",
+                    "uuid": "9a59673d-1d27-4514-bfdb-c18af10ea8e8"
+                }
+            ]
+        },
+        "2": {
+            "annotation": "",
+            "content_id": null,
+            "errors": null,
+            "id": 2,
+            "input_connections": {},
+            "inputs": [
+                {
+                    "description": "",
+                    "name": "gene_model"
+                }
+            ],
+            "label": "gene_model",
+            "name": "Input dataset",
+            "outputs": [],
+            "position": {
+                "left": 146.5,
+                "top": 267.75
+            },
+            "tool_id": null,
+            "tool_state": "{\"optional\": false}",
+            "tool_version": null,
+            "type": "data_input",
+            "uuid": "38aa3a63-f25e-4473-8c1c-9de97f0de8b6",
+            "workflow_outputs": [
+                {
+                    "label": null,
+                    "output_name": "output",
+                    "uuid": "75f4c364-6215-42e3-86dd-8b024e008ece"
+                }
+            ]
+        },
+        "3": {
+            "annotation": "",
+            "content_id": "toolshed.g2.bx.psu.edu/repos/bgruening/salmon/salmon/1.5.1+galaxy0",
+            "errors": null,
+            "id": 3,
+            "input_connections": {
+                "geneMap": {
+                    "id": 2,
+                    "output_name": "output"
+                },
+                "quant_type|input|single_or_paired|input_mate1": {
+                    "id": 0,
+                    "output_name": "output"
+                },
+                "quant_type|input|single_or_paired|input_mate2": {
+                    "id": 1,
+                    "output_name": "output"
+                }
+            },
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool Salmon quant",
+                    "name": "geneMap"
+                }
+            ],
+            "label": null,
+            "name": "Salmon quant",
+            "outputs": [
+                {
+                    "name": "output_quant",
+                    "type": "tabular"
+                },
+                {
+                    "name": "output_gene_quant",
+                    "type": "tabular"
+                },
+                {
+                    "name": "output_bam",
+                    "type": "bam"
+                }
+            ],
+            "position": {
+                "left": 458.566650390625,
+                "top": 144.5833282470703
+            },
+            "post_job_actions": {
+                "HideDatasetActionoutput_bam": {
+                    "action_arguments": {},
+                    "action_type": "HideDatasetAction",
+                    "output_name": "output_bam"
+                }
+            },
+            "tool_id": "toolshed.g2.bx.psu.edu/repos/bgruening/salmon/salmon/1.5.1+galaxy0",
+            "tool_shed_repository": {
+                "changeset_revision": "49121db48873",
+                "name": "salmon",
+                "owner": "bgruening",
+                "tool_shed": "toolshed.g2.bx.psu.edu"
+            },
+            "tool_state": "{\"adv\": {\"skipQuant\": \"false\", \"dumpEq\": \"false\", \"dumpEqWeights\": \"false\", \"minAssignedFrags\": \"\", \"biasSpeedSamp\": \"5\", \"fldMax\": \"1000\", \"fldMean\": \"250\", \"fldSD\": \"25\", \"forgettingFactor\": \"0.65\", \"initUniform\": \"false\", \"maxReadOcc\": \"100\", \"noLengthCorrection\": \"false\", \"noEffectiveLengthCorrection\": \"false\", \"noFragLengthDist\": \"false\", \"noBiasLengthThreshold\": \"false\", \"numBiasSamples\": \"2000000\", \"numAuxModelSamples\": \"5000000\", \"numPreAuxModelSamples\": \"5000\", \"useEM\": \"false\", \"rangeFactorizationBins\": \"0\", \"numGibbsSamples\": \"0\", \"noGammaDraw\": \"false\", \"numBootstraps\": \"0\", \"bootstrapReproject\": \"false\", \"thinningFactor\": \"16\", \"perTranscriptPrior\": \"false\", \"sigDigits\": \"3\", \"vbPrior\": \"1e-05\", \"writeOrphanLinks\": \"false\", \"writeUnmappedNames\": \"false\"}, \"gcBias\": \"false\", \"geneMap\": {\"__class__\": \"RuntimeValue\"}, \"incompatPrior\": \"0.0\", \"meta\": \"false\", \"quant_type\": {\"qtype\": \"reads\", \"__current_case__\": 0, \"refTranscriptSource\": {\"TranscriptSource\": \"indexed\", \"__current_case__\": 0, \"index\": \"dm6\"}, \"input\": {\"single_or_paired\": {\"single_or_paired_opts\": \"paired\", \"__current_case__\": 1, \"input_mate1\": {\"__class__\": \"RuntimeValue\"}, \"input_mate2\": {\"__class__\": \"RuntimeValue\"}, \"libtype\": {\"strandedness\": \"A\", \"__current_case__\": 0}}}, \"type\": \"quasi\", \"discardOrphansQuasi\": \"false\", \"validmap\": {\"validateMappings\": \"true\", \"__current_case__\": 0, \"minScoreFraction\": \"0.65\", \"maxMMPExtension\": \"\", \"matchScore\": \"2\", \"mismatchPenalty\": \"4\", \"gapOpenPenalty\": \"5\", \"gapExtensionPenalty\": \"3\", \"mimicBT2\": \"false\", \"mimicStrictBT2\": \"false\", \"hardFilter\": \"false\"}, \"consensusSlack\": \"0\", \"dovetail\": \"false\", \"recoverOrphans\": \"false\", \"writeMappings\": \"true\", \"consistentHits\": \"false\", \"quasiCoverage\": \"\"}, \"seqBias\": \"false\", \"__page__\": null, \"__rerun_remap_job_id__\": null}",
+            "tool_version": "1.5.1+galaxy0",
+            "type": "tool",
+            "uuid": "18bedf88-078d-4777-aa75-c219174bf121",
+            "workflow_outputs": [
+                {
+                    "label": null,
+                    "output_name": "output_quant",
+                    "uuid": "0a67486b-0ca5-4168-8714-a9452cbe9a6c"
+                },
+                {
+                    "label": null,
+                    "output_name": "output_gene_quant",
+                    "uuid": "0b74a747-de3c-4c7b-9907-4b26c4f79f2f"
+                }
+            ]
+        }
+    },
+    "tags": [],
+    "uuid": "f4a79e5a-44c4-4e8b-bad5-4524cb65516c",
+    "version": 3
+}
